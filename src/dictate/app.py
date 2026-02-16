@@ -59,13 +59,18 @@ class DictateApp(rumps.App):
 
         self._hotkey = create_hotkey_listener(config)
 
+        # Keep a direct reference to the status menu item so we can always update it
+        self._status_item = rumps.MenuItem("Status: Idle", callback=None)
+
+        mode_label = "Hold-to-talk" if config.hotkey_mode == "hold" else "Toggle"
+
         # Menu items
         self.menu = [
-            rumps.MenuItem("Status: Idle", callback=None),
+            self._status_item,
             None,  # separator
             rumps.MenuItem("ASR: " + config.asr_engine),
             rumps.MenuItem("Model: " + config.whisper_model),
-            rumps.MenuItem("Hotkey: Option+Space"),
+            rumps.MenuItem(f"Hotkey: Option+Space ({mode_label})"),
             None,  # separator
         ]
 
@@ -76,15 +81,8 @@ class DictateApp(rumps.App):
             self.icon = icon_path
         self.title = _STATUS_TEXT.get(state, "Dictate")
 
-        # Update status menu item
-        status_item = self.menu.get("Status: Idle") or self.menu.get("Status: Recording...") or self.menu.get("Status: Processing...")
-        if status_item:
-            status_item.title = f"Status: {state.name.capitalize()}"
-
-    @rumps.clicked("Quit Dictate")
-    def on_quit(self, _: rumps.MenuItem) -> None:
-        self._hotkey.stop()
-        rumps.quit_application()
+        # Update status menu item via direct reference (not by title lookup)
+        self._status_item.title = f"Status: {state.name.capitalize()}"
 
     def run(self, **kwargs: object) -> None:
         """Start the hotkey listener and run the app."""

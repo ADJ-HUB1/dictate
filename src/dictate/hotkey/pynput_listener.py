@@ -35,9 +35,10 @@ class PynputHotkeyListener:
             self._listener.start()
             logger.info("Hotkey listener started (Option+Space, toggle mode)")
         else:
-            # Hold mode
+            # Hold mode: pipeline.toggle() handles both start and stop,
+            # so we use the same callback for press (start) and release (stop).
             self._on_start = on_toggle
-            self._on_stop = on_toggle  # In toggle mode, same callback
+            self._on_stop = on_toggle
             self._listener = keyboard.Listener(
                 on_press=self._on_press_hold,
                 on_release=self._on_release_hold,

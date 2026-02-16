@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 
 import numpy as np
 from faster_whisper import WhisperModel
@@ -17,14 +18,19 @@ class WhisperLocalEngine:
         self._model_size = model_size
         self._language = language
         self._model: WhisperModel | None = None
+        self._load_lock = threading.Lock()
         logger.info("WhisperLocalEngine initialized (model will load on first use)")
 
     def _ensure_model_loaded(self) -> None:
-        """Lazy-load the Whisper model on first transcription."""
-        if self._model is None:
-            logger.info("Loading Whisper model '%s' (this may take a few seconds)...", self._model_size)
-            self._model = WhisperModel(self._model_size, device="cpu", compute_type="int8")
-            logger.info("Whisper model loaded successfully.")
+        """Lazy-load the Whisper model on first transcription (thread-safe)."""
+        if self._model is not None:
+            return
+        with self._load_lock:
+            # Double-check after acquiring lock
+            if self._model is None:
+                logger.info("Loading Whisper model '%s' (this may take a few seconds)...", self._model_size)
+                self._model = WhisperModel(self._model_size, device="cpu", compute_type="int8")
+                logger.info("Whisper model loaded successfully.")
 
     def transcribe(self, audio: np.ndarray, sample_rate: int = 16000) -> str:
         if audio.size == 0:

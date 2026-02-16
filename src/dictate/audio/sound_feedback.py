@@ -8,27 +8,29 @@ import subprocess
 logger = logging.getLogger(__name__)
 
 
-def play_beep(frequency: int = 1000, duration: float = 0.1) -> None:
-    """Play a system beep using macOS 'afplay' command.
+def _play_sound(sound_file: str, rate: float = 1.0) -> None:
+    """Play a macOS system sound non-blocking.
 
     Args:
-        frequency: Beep frequency in Hz (higher = higher pitch)
-        duration: Beep duration in seconds
+        sound_file: Path to the .aiff sound file
+        rate: Playback rate (higher = higher pitch). 1.0 = normal, 2.0 = double speed/pitch
     """
     try:
-        # Use the macOS system beep sound
-        # For custom frequencies, we'd need to generate a sound file
-        # For simplicity, use the system beep (NSBeep equivalent)
-        subprocess.run(["afplay", "/System/Library/Sounds/Tink.aiff"], check=False, capture_output=True)
+        # Popen is non-blocking — sound plays in background without stalling the pipeline
+        subprocess.Popen(
+            ["afplay", "-r", str(rate), sound_file],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
     except Exception:
         logger.debug("Could not play sound feedback", exc_info=True)
 
 
 def play_start_beep() -> None:
-    """Play a beep when recording starts (higher pitch)."""
-    play_beep(frequency=1200, duration=0.1)
+    """Play a higher-pitched beep when recording starts."""
+    _play_sound("/System/Library/Sounds/Tink.aiff", rate=1.5)
 
 
 def play_stop_beep() -> None:
-    """Play a beep when recording stops (lower pitch)."""
-    play_beep(frequency=800, duration=0.15)
+    """Play a lower-pitched beep when recording stops."""
+    _play_sound("/System/Library/Sounds/Pop.aiff", rate=1.0)

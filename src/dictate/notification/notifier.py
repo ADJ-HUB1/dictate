@@ -4,12 +4,22 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import threading
 
 logger = logging.getLogger(__name__)
 
 
+def _escape_applescript(text: str) -> str:
+    """Escape a string for use inside AppleScript double-quoted strings.
+
+    AppleScript uses doubled double-quotes inside string literals, and
+    backslashes must also be doubled.
+    """
+    return text.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def show_notification(title: str, message: str, subtitle: str = "") -> None:
-    """Show a macOS notification using osascript.
+    """Show a macOS notification using osascript (non-blocking).
 
     Args:
         title: Notification title
@@ -17,20 +27,19 @@ def show_notification(title: str, message: str, subtitle: str = "") -> None:
         subtitle: Optional subtitle text
     """
     try:
-        # Escape quotes in the message for AppleScript
-        message = message.replace('"', '\\"').replace("'", "\\'")
-        subtitle = subtitle.replace('"', '\\"').replace("'", "\\'")
+        title = _escape_applescript(title)
+        message = _escape_applescript(message)
+        subtitle = _escape_applescript(subtitle)
 
-        script = f'''
-        display notification "{message}" with title "{title}" subtitle "{subtitle}"
-        '''
+        script = f'display notification "{message}" with title "{title}" subtitle "{subtitle}"'
 
-        subprocess.run(
-            ["osascript", "-e", script],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
+        # Run in a thread so we don't block text injection
+        threading.Thread(
+            target=subprocess.run,
+            args=(["osascript", "-e", script],),
+            kwargs={"check": False, "capture_output": True},
+            daemon=True,
+        ).start()
     except Exception:
         logger.debug("Could not show notification", exc_info=True)
 
