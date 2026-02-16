@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.dictate.app</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <!-- Update this path to your venv Python -->
+        <string>/usr/local/bin/python3</string>
+        <string>-m</string>
+        <string>dictate</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <!-- Update this path to your dictate project directory -->
+    <string>/path/to/dictate</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/dictate.stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/dictate.stderr.log</string>
+</dict>
+</plist>
